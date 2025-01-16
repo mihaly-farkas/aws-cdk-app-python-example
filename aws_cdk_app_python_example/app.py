@@ -2,7 +2,7 @@
 
 import aws_cdk as cdk
 
-from cdk_app.cdk_app_stack import CdkAppStack
+from aws_cdk_app_python_example.stacks.log_group_stack import LogGroupStack
 
 # `app` is the CDK application
 app = cdk.App()
@@ -13,8 +13,8 @@ region = app.node.try_get_context("region") or "eu-west-1"
 # Create the main environment
 env = cdk.Environment(region=region)
 
-# Create a new "CDK App" stack
-CdkAppStack(app, "CdkAppStack", env=env)
+# Create a new "Log Group" stack
+LogGroupStack(app, "LogGroup", env=env)
 
 # Synthesize the CloudFormation template
 app.synth()

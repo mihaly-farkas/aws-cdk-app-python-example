@@ -12,9 +12,11 @@ jobs:
   continuous-integration:
     name: "Continuous Integration"
     runs-on: ubuntu-latest
+    environment: development
     permissions:
       contents: write
       pull-requests: write
+      id-token: write
     steps:
       - name: "Release Please!"
         uses: googleapis/release-please-action@v4
@@ -22,3 +24,62 @@ jobs:
         with:
           token: ${{ secrets.SERVICE_USER_CI_TOKEN }}
           target-branch: ${{ github.ref_name }}
+
+      - name: "Checkout the repository"
+        uses: actions/checkout@v4
+
+      - name: "Setup Python"
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: "pip"
+
+      - name: "Install dependencies"
+        run: |
+          # Bash script
+          pip install .
+          pip install .[build]
+          pip install .[test]
+
+      - name: "Run tests"
+        run: |
+          # Bash script
+          git tag -f "@latest"
+          python -m pytest
+
+      - name: "Build package"
+        run: |
+          # Bash script
+          python -m build
+
+      # TODO: I should add here the deployment step.
+      #       I want to implement an AWS deployment flow from a published package, not from the source code directly.
+      #       But at this moment, I skip this step and going forward to the actual deployment step.
+
+      - name: "Install the package"
+        run: |
+          # Bash script
+          PACKAGE_VERSION=$(python -c "import toml; print(toml.load('pyproject.toml')['project']['version'])")
+          echo -e "Package version: $PACKAGE_VERSION"
+          pip install "dist/mihaly_farkas_aws_cdk_app_python_example-${PACKAGE_VERSION}.tar.gz"
+
+      - name: "Log in to AWS"
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: "arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/${{ secrets.AWS_CDK_DEPLOYER_ROLE_NAME }}"
+          aws-region: ${{ vars.AWS_REGION }}
+          role-session-name: "GithubCdkDeployer"
+
+      - name: "Deploy to AWS"
+        run: |
+          # Bash script
+          
+          TMP_DIR=$(mktemp -d)
+          cd $TMP_DIR || exit 1
+          
+          echo '{}' > cdk.context.json
+          
+          npx cdk deploy --all \
+            --app "python -m aws_cdk_app_python_example.app" \
+            --require-approval never \
+            --concurrency 10
