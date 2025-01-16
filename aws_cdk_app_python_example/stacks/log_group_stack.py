@@ -6,7 +6,7 @@ from constructs import Construct
 
 
 # An AWS CDK stack that creates a CloudWatch Log Group
-class CdkAppStack(Stack):
+class LogGroupStack(Stack):
 
     # Init method for the stack
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
