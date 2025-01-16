@@ -1,0 +1,25 @@
+# Generic files and folders to ignore
+*.log
+*.log.*
+*.log/*
+.tmp
+*.tmp
+*.tmp.*
+*.tmp/*
+tmp.*
+.local/
+.bak/
+
+# Intellij IDEA settings
+.idea/
+*.iml
+
+# AWS CDK with Python
+*.swp
+package-lock.json
+__pycache__
+.pytest_cache
+.venv
+*.egg-info
+.cdk.staging
+cdk.out
