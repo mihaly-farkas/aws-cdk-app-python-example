@@ -1,7 +1,7 @@
 import aws_cdk as core
 import aws_cdk.assertions as assertions
 
-from cdk_app.cdk_app_stack import CdkAppStack
+from aws_cdk_app_python_example.cdk_app_stack import CdkAppStack
 
 
 # example tests. To run these tests, uncomment this file along with the example

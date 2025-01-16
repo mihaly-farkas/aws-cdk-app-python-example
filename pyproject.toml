@@ -3,9 +3,9 @@ requires = ["setuptools>=42", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "mihaly-farkas.aws-cdk-app-python-example"
+name = "python-farkas.aws-cdk-app-python-example"
 description = "An example AWS CDK application built with Python"
-version = "0.1.0b2"
+version = "0.1.0b3"
 authors = [
     { name = "Mihaly Farkas" }
 ]
@@ -16,6 +16,10 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+build = [
+    "build>=1.2.2",
+    "toml>=0.10.2",
+]
 test = [
     "pytest>=8.3.4",
 ]
