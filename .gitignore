@@ -23,3 +23,4 @@ __pycache__
 *.egg-info
 .cdk.staging
 cdk.out
+dist
