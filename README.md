@@ -3,7 +3,7 @@
 # AWS CDK Application with Python Example
 
 This very simple application is designed to show you how to manage an [AWS CDK](https://aws.amazon.com/cdk/)
-application written in [Python](https://www.python.org/.
+application written in [Python](https://www.python.org/).
 
 It does not focus on the application itself, but I intend to present an working continuous integration solution using
 [GitHub Actions](https://github.com/features/actions).
