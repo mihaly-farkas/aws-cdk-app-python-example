@@ -1,3 +1,5 @@
+[![Continuous Integration](https://github.com/mihaly-farkas/aws-cdk-app-python-example/actions/workflows/continuous-integration.yaml/badge.svg)](https://github.com/mihaly-farkas/aws-cdk-app-python-example/actions/workflows/continuous-integration.yaml)
+
 # AWS CDK Application with Python Example
 
 This very simple application is designed to show you how to manage an [AWS CDK](https://aws.amazon.com/cdk/)
