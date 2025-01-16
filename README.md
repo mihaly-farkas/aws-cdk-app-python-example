@@ -1,8 +1,14 @@
 #   AWS CDK Application with Python Example
 
-[//]: # (TODO: Add the description of the CDK application here)
+This very simple application is designed to show you how to manage an [AWS CDK](https://aws.amazon.com/cdk/) 
+application written in [Python](https://www.python.org/.
 
-**TODO:** _Add the description of the CDK application here._
+It does not focus on the application itself, but I intend to present an  working continuous integration solution using 
+[GitHub Actions](https://github.com/features/actions).
+
+This app was generated using the 
+[mihaly-farkas/copier-template-aws-cdk-app-python](https://github.com/mihaly-farkas/copier-template-aws-cdk-app-python) 
+template using [Copier](https://copier.readthedocs.io/en/stable/).
 
 ## Prerequisites
 
