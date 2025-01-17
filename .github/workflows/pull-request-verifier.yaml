@@ -20,21 +20,21 @@ jobs:
     steps:
       - name: "Checkout the repository"
         uses: actions/checkout@v4
-
       - name: "Setup Python"
         uses: actions/setup-python@v5
         with:
-          python-version: "3.13"
-          cache: "pip"
-
+          python-version: ${{ vars.PYTHON_VERSION }}
+          cache: pip
       - name: "Install dependencies"
         run: |
           # Bash script
+          python -m pip install --upgrade pip
+          python -m pip install --upgrade build
+          pip install setuptools wheel
           pip install .
+          pip install .[build]
           pip install .[test]
-
       - name: "Run tests"
         run: |
           # Bash script
-          git tag -f "@latest"
           python -m pytest

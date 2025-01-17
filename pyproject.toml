@@ -1,24 +1,35 @@
 [build-system]
-requires = ["setuptools>=42", "wheel"]
+requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
+dynamic = ["version"]
 name = "mihaly-farkas.aws-cdk-app-python-example"
 description = "An example AWS CDK application built with Python"
-version = "0.1.0"
 authors = [
     { name = "Mihaly Farkas" }
+]
+license = { file = "LICENSE" }
+readme = "README.md"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
 ]
 requires-python = ">=3.8"
 dependencies = [
     "aws-cdk-lib>=2.176.0",
-    "constructs>=10.0.0,<11.0.0"
+    "constructs>=10.0.0,<11.0.0",
+    "case-converter>=1.1.0",
 ]
+
+[project.urls]
+"Homepage" = "https://github.com/mihaly-farkas/aws-cdk-app-python-example"
+"Bug Tracker" = "https://github.com/mihaly-farkas/aws-cdk-app-python-example/issues"
 
 [project.optional-dependencies]
 build = [
     "build>=1.2.2",
-    "toml>=0.10.2",
 ]
 test = [
     "pytest>=8.3.4",

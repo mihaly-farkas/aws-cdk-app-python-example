@@ -1,0 +1,58 @@
+name: "Set build variables"
+inputs:
+  python-version:
+    description: "The version of Python to be used"
+    required: true
+  package:
+    description: "The name of the Python package to be built"
+    required: true
+  release-please-output:
+    description: "The output of the Release Please action in JSON format"
+    required: true
+  deployment-environment-mapping:
+    description: "The mapping of the package stabilities to deployment environments in JSON format"
+    required: true
+outputs:
+    package:
+      description: "The name of the Python package to be built"
+      value: ${{ inputs.set-build-variables.outputs.package }}
+    package-version:
+      description: "The version of the Python package"
+      value: ${{ steps.set-build-variables.outputs.package-version }}
+    package-version-reference:
+      description: "The reference to the version of the Python package"
+      value: ${{ steps.set-build-variables.outputs.package-version-reference }}
+    package-stability:
+      description: "The stability of the Python package"
+      value: ${{ steps.set-build-variables.outputs.package-stability }}
+    environment:
+      description: "The deployment environment for AWS CDK stacks"
+      value: ${{ steps.set-build-variables.outputs.environment }}
+runs:
+  using: "composite"
+  steps:
+    - name: "Setup Python"
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: "Install Set Build Variables dependencies"
+      shell: bash
+      run: |
+        # Shell script
+        pip install -r ${GITHUB_ACTION_PATH}/requirements.txt
+
+    - name: "Set the output variables"
+      shell: bash
+      id: set-build-variables
+      env:
+        PACKAGE: ${{ inputs.package }}
+        RELEASE_PLEASE_OUTPUT_JSON_STRING: ${{ inputs.release-please-output }}
+        DEPLOYMENT_ENVIRONMENT_MAPPING_JSON_STRING: ${{ inputs.deployment-environment-mapping }}
+      run: |
+        # Shell script
+        PACKAGE_VERSION=$(python -c "import ${{ inputs.package }}; print(${{ inputs.package }}.__version__)")
+        export PACKAGE_VERSION
+        
+        chmod +x ${GITHUB_ACTION_PATH}/set_build_variables.py
+        ${GITHUB_ACTION_PATH}/set_build_variables.py

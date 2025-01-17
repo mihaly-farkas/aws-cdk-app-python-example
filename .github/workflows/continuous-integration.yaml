@@ -12,12 +12,45 @@ jobs:
   continuous-integration:
     name: "Continuous Integration"
     runs-on: ubuntu-latest
-    environment: development
     permissions:
-      contents: write
+      contents: read
       pull-requests: write
-      id-token: write
+    environment: development
+    outputs:
+      # `true` if a release was created by the Release Please action, otherwise `false`.
+      release-created: ${{ steps.set-build-variables.outputs.release-created }}
+
+      # The name of the Python package to be built.
+      package: ${{ steps.set-build-variables.outputs.package }}
+
+      # The version of the Python module.
+      package-version: ${{ steps.set-build-variables.outputs.package-version }}
+
+      # The reference to the version of the Python package.
+      # This value can be used to reference the version of the Python package in the GitHub repository.
+      # It's the version itself if the package is tagged with the version, otherwise it's the commit SHA.
+      package-version-reference: ${{ steps.set-build-variables.outputs.package-version-reference }}
+
+      # The stability of the Python package.
+      # The stability is determined based on the version of the package and the standard development cycle.
+      # Possible values are:
+      # - `alpha`: The package is for the developers only, and it's not considered stable at all.
+      # - `beta`:  The package is considered stable from the developer's perspective, but validation is still required.
+      # - `release-candidate`: The package is considered stable pre-release, and it's ready for the final release.
+      # - `final `: A stable, published version.
+      # See: https://devguide.python.org/developer-workflow/development-cycle/
+      package-stability: ${{ steps.set-build-variables.outputs.package-stability }}
+
+      # The deployment environment for AWS CDK stacks.
+      # This variable stores the GitHub environment name where the AWS CDK stacks will be deployed.
+      # The environment name is determined based on the stability of the Python package and the configured mapping in
+      # the `DEPLOYMENT_ENVIRONMENT_MAPPING` variable.
+      # See: https://docs.github.com/en/actions/managing-workflow-runs-and-deployments/managing-deployments/managing-environments-for-deployment
+      environment: ${{ steps.set-build-variables.outputs.environment }}
+
     steps:
+      # The Release Please action takes care of the release process.
+      # See: https://github.com/googleapis/release-please-action
       - name: "Release Please!"
         uses: googleapis/release-please-action@v4
         id: release-please
@@ -25,61 +58,77 @@ jobs:
           token: ${{ secrets.SERVICE_USER_CI_TOKEN }}
           target-branch: ${{ github.ref_name }}
 
+      # Checkout the source code
       - name: "Checkout the repository"
         uses: actions/checkout@v4
+
+      # Set build variables
+      - name: "Set build variables"
+        uses: ./.github/actions/set-build-variables
+        id: set-build-variables
+        with:
+          python-version: ${{ vars.PYTHON_VERSION }}
+          package: aws_cdk_app_python_example
+          release-please-output: ${{ toJSON(steps.release-please.outputs) }}
+          deployment-environment-mapping: ${{ vars.DEPLOYMENT_ENVIRONMENT_MAPPING }}
+
+  deploy:
+    name: "Deploy"
+    if: ${{ needs.continuous-integration.outputs.environment != '' }}
+    runs-on: ubuntu-latest
+    needs:
+      - continuous-integration
+    environment: ${{ needs.continuous-integration.outputs.environment }}
+    permissions:
+      id-token: write
+    steps:
+      - name: "Setup Node.js"
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ vars.NODE_VERSION }}
 
       - name: "Setup Python"
         uses: actions/setup-python@v5
         with:
-          python-version: "3.13"
-          cache: "pip"
+          python-version: ${{ vars.PYTHON_VERSION }}
 
       - name: "Install dependencies"
         run: |
           # Bash script
-          pip install .
-          pip install .[build]
-          pip install .[test]
+          npm install -g aws-cdk
 
-      - name: "Run tests"
+      - name: "Install the repository as a Python package"
         run: |
           # Bash script
-          git tag -f "@latest"
-          python -m pytest
+          python -m pip install "git+https://github.com/mihaly-farkas/aws-cdk-app-python-example.git@${{ needs.continuous-integration.outputs.package-version-reference }}"
 
-      - name: "Build package"
-        run: |
-          # Bash script
-          python -m build
-
-      # TODO: I should add here the deployment step.
-      #       I want to implement an AWS deployment flow from a published package, not from the source code directly.
-      #       But at this moment, I skip this step and going forward to the actual deployment step.
-
-      - name: "Install the package"
-        run: |
-          # Bash script
-          PACKAGE_VERSION=$(python -c "import toml; print(toml.load('pyproject.toml')['project']['version'])")
-          echo -e "Package version: $PACKAGE_VERSION"
-          pip install "dist/mihaly_farkas_aws_cdk_app_python_example-${PACKAGE_VERSION}.tar.gz"
-
-      - name: "Log in to AWS"
+      - name: "Login to AWS"
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: "arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/${{ secrets.AWS_CDK_DEPLOYER_ROLE_NAME }}"
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/${{ secrets.AWS_CDK_DEPLOYER_ROLE_NAME }}
           aws-region: ${{ vars.AWS_REGION }}
-          role-session-name: "GithubCdkDeployer"
+          role-session-name: GithubCdkDeployer
 
-      - name: "Deploy to AWS"
+      - name: "Deploy the AWS CDK stacks"
         run: |
           # Bash script
-          
+
+          # Use an empty directory to avoid any potential conflicts
           TMP_DIR=$(mktemp -d)
           cd $TMP_DIR || exit 1
-          
-          echo '{}' > cdk.context.json
-          
+
+          # Create an empty AWS CDK context file
+          echo "{}" > cdk.context.json
+
+          cat > config.json <<- EndOfConfigJson
+          ${{ vars.APP_CONFIG }}
+          EndOfConfigJson
+
+          # Deploy the AWS CDK stack
+          # Note that the `--app` parameter is used to specify the entry point of the CDK application which is the
+          # `app.py` file in the `aws_cdk_app_python_example` package.
           npx cdk deploy --all \
             --app "python -m aws_cdk_app_python_example.app" \
+            --context config.json.file-path=config.json \
             --require-approval never \
             --concurrency 10
